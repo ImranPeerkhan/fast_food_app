@@ -58,43 +58,29 @@ async function clearStorage(): Promise<void> {
 }
 
 async function uploadImageToStorage(imageUrl: string) {
-    const response = await fetch(imageUrl);
-    const blob = await response.blob();
-
-    console.log('response ',response)
-
-    const fileObj = {
-        name: imageUrl.split("/").pop() || `file-${Date.now()}.jpg`,
-        type: blob.type,
-        size: blob.size,
-        uri: imageUrl,
-    };
-
-    console.log('fileObj ',fileObj)
-
-    const x = await storage.listFiles( appwriteConfig.bucketId);
-    console.log('x ',x)
-    console.log('appwriteConfig.bucketId ',appwriteConfig.bucketId)
     try {
-        const file = await storage.createFile(
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+
+        // Create a file object that matches Appwrite's expected format
+        const file = {
+            name: imageUrl.split("/").pop() || `file-${Date.now()}.jpg`,
+            type: blob.type || 'image/jpeg',
+            size: blob.size,
+            uri: imageUrl
+        };
+        const uploadedFile = await storage.createFile(
             appwriteConfig.bucketId,
             ID.unique(),
-            {
-                uri: 'www.google.com',
-                name: 'name',
-                type: 'jpg',
-                size: 2938122,
-            }
+            file
         );
-        console.log('file ',file)
 
-        return storage.getFileViewURL(appwriteConfig.bucketId, file.$id);
-    }catch (error) {
-        console.error('Error uploading file:', error);
-        throw new Error(`Failed to upload image: ${error}`);
+        return storage.getFileViewURL(appwriteConfig.bucketId, uploadedFile.$id);
+    } catch (error) {
+        console.error(pwd
+        'Error uploading file:', error);
+        throw error;
     }
-
-
 }
 
 async function seed(): Promise<void> {
@@ -136,7 +122,6 @@ async function seed(): Promise<void> {
     // 4. Create Menu Items
     const menuMap: Record<string, string> = {};
     for (const item of data.menu) {
-        console.log("item", item);
         const uploadedImage = await uploadImageToStorage(item.image_url);
 
         const doc = await databases.createDocument(
@@ -154,23 +139,23 @@ async function seed(): Promise<void> {
                 categories: categoryMap[item.category_name],
             }
         );
-    }
 
-      //  menuMap[item.name] = doc.$id;
-    //
-    //     // 5. Create menu_customizations
-    //     for (const cusName of item.customizations) {
-    //         await databases.createDocument(
-    //             appwriteConfig.databaseId,
-    //             appwriteConfig.menuCustomizationsCollectionId,
-    //             ID.unique(),
-    //             {
-    //                 menu: doc.$id,
-    //                 customizations: customizationMap[cusName],
-    //             }
-    //         );
-    //     }
-    // }
+         menuMap[item.name] = doc.$id;
+        //
+        // 5. Create menu_customizations
+        for (const cusName of item.customizations) {
+            await databases.createDocument(
+                appwriteConfig.databaseId,
+                appwriteConfig.menuCustomizationsCollectionId,
+                ID.unique(),
+                {
+                    menu: doc.$id,
+                    customizations: customizationMap[cusName],
+                }
+            );
+
+        }
+    }
 
     console.log("✅ Seeding complete. step 3");
 }
