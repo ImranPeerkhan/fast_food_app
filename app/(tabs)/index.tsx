@@ -1,13 +1,18 @@
-import {FlatList, Pressable, Text, View, Image, TouchableOpacity, ScrollView} from "react-native";
+import {FlatList, Pressable, Text, View, Image, TouchableOpacity, ScrollView, Button} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {offers} from "@/constants";
 import {Fragment} from "react";
 import cn from 'clsx'
 import {images} from "../../constants";
 import CartButtons from "@/components/CartButtons";
+import * as Sentry from '@sentry/react-native';
+import useAuthStore from "@/store/auth.store";
 
 export default function Index() {
 
+    console.log("Index component rendered");
+    const {user} = useAuthStore();
+    console.log("user ",JSON.stringify(user, null, 2));
     const listHeader = () => ( <View className='flex-between flex-row w-full my-5 px-5'>
         <View className='flex-start'>
             <Text className='small-bold text-primary'>Deliver To</Text>
